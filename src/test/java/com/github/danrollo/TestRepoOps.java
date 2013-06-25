@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Properties;
 
 import static org.junit.Assert.*;
 
@@ -22,13 +21,11 @@ import static org.junit.Assert.*;
  */
 public class TestRepoOps {
 
-    private Properties testProps;
     private RepoOps repoOps;
     private File workDir;
 
     @Before
     public void setUp() throws IOException {
-        testProps = TestRepoList.getTestProperties();
 
         repoOps = new RepoOps();
 
@@ -44,7 +41,7 @@ public class TestRepoOps {
     @Test
     public void testDoClone() throws IOException, GitAPIException, URISyntaxException {
 
-        final RepoList repoList = new RepoList(testProps.getProperty("user"), testProps.getProperty("password"));
+        final RepoList repoList = new RepoList(TestRepoList.getTestUser(), TestRepoList.getTestPwd());
         if (repoList.getReposPublic().size() > 0) {
             final Repository repo = repoList.getReposPublic().get(0);
             final String repoUrl = repo.getCloneUrl();
@@ -53,9 +50,9 @@ public class TestRepoOps {
             RepoOps.createDir(repoCloneDir);
 
             repoOps.doClone(repoUrl, repoCloneDir,
-                    RepoOps.getCredentials(testProps.getProperty("user"), testProps.getProperty("password")));
+                    RepoOps.getCredentials(TestRepoList.getTestUser(), TestRepoList.getTestPwd()));
         } else {
-            System.out.println("WARNING **** Skipping: testDoClone() due to zero public repositories available for user: " + testProps.getProperty("user"));
+            System.out.println("WARNING **** Skipping: testDoClone() due to zero public repositories available for user: " + TestRepoList.getTestUser());
         }
 
     }
@@ -64,7 +61,7 @@ public class TestRepoOps {
     //@Test
     public void testCloneAll() throws IOException, GitAPIException, URISyntaxException {
 
-        final List<String> failures = repoOps.cloneAll(workDir, testProps.getProperty("user"), testProps.getProperty("password"));
+        final List<String> failures = repoOps.cloneAll(workDir, TestRepoList.getTestUser(), TestRepoList.getTestPwd());
 
         final String message;
         if (failures.size() > 0) {

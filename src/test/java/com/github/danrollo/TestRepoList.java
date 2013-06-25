@@ -18,22 +18,35 @@ import static org.junit.Assert.*;
  * Time: 3:30 PM
  */
 public class TestRepoList {
+    static final String PROP_TEST_USER = "automated-clone.test.user";
+    static final String PROP_TEST_PWD = "automated-clone.test.password";
 
-    static Properties getTestProperties() throws IOException {
-        // read user/pwd from local source - @todo Add your own values to the file 'src/test/resources/test-login.properties'.
-        final String testPropsFilename = "test-login.properties";
-        final InputStream is = TestRepoList.class.getClassLoader().getResourceAsStream(testPropsFilename);
-        final Properties testProps = new Properties();
-        try {
-            assertNotNull("Failed to load unit test user/password properties. Be sure you created your own: '" + testPropsFilename + "' file.");
-            testProps.load(is);
-        } finally {
-            is.close();
+    private static Properties testProps;
+    private static Properties getTestProperties() throws IOException {
+        if (testProps == null) {
+            // read user/pwd from local source - @todo Add your own values to the file 'src/test/resources/test-login.properties'.
+            final String testPropsFilename = "test-login.properties";
+            final InputStream is = TestRepoList.class.getClassLoader().getResourceAsStream(testPropsFilename);
+            testProps = new Properties();
+            try {
+                assertNotNull("Failed to load unit test user/password properties. Be sure you created your own: '" + testPropsFilename + "' file.");
+                testProps.load(is);
+            } finally {
+                is.close();
+            }
+            // sanity check
+            final String testUserName = testProps.getProperty(PROP_TEST_USER);
+            assertFalse("It appears you did not edit 'src/test/resources/" + testPropsFilename + "' to have your user/pwd.", "myuser".equals(testUserName));
         }
-        // sanity check
-        final String testUserName = testProps.getProperty("user");
-        assertFalse("It appears you did not edit 'src/test/resources/" + testPropsFilename + "' to have your user/pwd.", "myuser".equals(testUserName));
         return testProps;
+    }
+
+    static String getTestUser() throws IOException {
+        return getTestProperties().getProperty(PROP_TEST_USER);
+    }
+
+    static String getTestPwd() throws IOException {
+        return getTestProperties().getProperty(PROP_TEST_PWD);
     }
 
 
@@ -43,7 +56,7 @@ public class TestRepoList {
     public void setUp() throws IOException {
         final Properties testProps = getTestProperties();
 
-        repoList = new RepoList(testProps.getProperty("user"), testProps.getProperty("password"));
+        repoList = new RepoList(getTestUser(), getTestPwd());
     }
 
     @Test(expected = RequestException.class)
