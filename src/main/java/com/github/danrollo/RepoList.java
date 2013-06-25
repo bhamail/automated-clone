@@ -19,12 +19,21 @@ import java.util.List;
  * Date: 6/24/13
  * Time: 3:07 PM
  */
-public class RepoList {
+public final class RepoList {
 
+    /**
+     * Repository user name.
+     */
     private final String user;
+    /**
+     * Repository password.
+     */
     private final String pwd;
 
-    // so far, this is the only scope needed to list repos
+    /**
+     * Permission scopes need to list repo info.
+     * So far, this is the only scope needed to list repos
+     */
     private final String[] scopes = new String[] {"repo"};
 
     private GitHubClient gitHubClient;
@@ -53,7 +62,8 @@ public class RepoList {
         return gitHubClient;
     }
 
-    public synchronized RepositoryService getRepositoryService() throws IOException {
+    public synchronized RepositoryService getRepositoryService()
+            throws IOException {
         if (repositoryService == null) {
             repositoryService = new RepositoryService(getValidatedClient());
         }
@@ -62,13 +72,15 @@ public class RepoList {
 
 
     public List<User> getOrganizations() throws IOException {
-        final OrganizationService organizationService = new OrganizationService(getValidatedClient());
+        final OrganizationService organizationService
+                = new OrganizationService(getValidatedClient());
         return organizationService.getOrganizations();
     }
 
     public List<Repository> getReposForOrg(final User org) throws IOException {
         if (org == null) {
-            throw new IllegalArgumentException("org parameter must not be null.");
+            throw new IllegalArgumentException(
+                    "org parameter must not be null.");
         }
 
         final RepositoryService service = getRepositoryService();
@@ -90,7 +102,8 @@ public class RepoList {
 
         for (final User org : orgs) {
             final List<Repository> orgRepos = getReposForOrg(org);
-            System.out.println("Org: " + org.getLogin() + ", total org repos: " + orgRepos.size());
+            System.out.println("Org: " + org.getLogin() + ", total org repos: "
+                    + orgRepos.size());
             for (final Repository repo : orgRepos) {
                 System.out.println(repo.getCloneUrl());
                 count++;

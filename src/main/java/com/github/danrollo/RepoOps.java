@@ -20,15 +20,19 @@ import java.util.List;
  * Date: 6/24/13
  * Time: 8:39 PM
  */
-public class RepoOps {
+public final class RepoOps {
 
-    static CredentialsProvider getCredentials(final String user, final String pwd) {
+    static CredentialsProvider getCredentials(final String user,
+                                              final String pwd) {
         return new UsernamePasswordCredentialsProvider(user, pwd);
     }
 
     /**
-     * Use 1. init, 2. pull to avoid writing credentials or token in plain text in git files
-     * See: bottom of page: https://github.com/blog/1270-easier-builds-and-deployments-using-git-over-https-and-oauth
+     * Use 1. init, 2. pull to avoid writing credentials or token in plain text
+     * in git files
+     * See: bottom of page:
+     * https://github.com/blog/
+     * 1270-easier-builds-and-deployments-using-git-over-https-and-oauth
      *
      * mkdir foo
      * cd foo
@@ -36,34 +40,35 @@ public class RepoOps {
      * git pull https://<token>@github.com/username/bar.git
      *
      * @param repoURL Repository CloneUrl
-     * @param repoCloneDir The local directory in which to create the clone (should include the repo name)
+     * @param repoCloneDir The local directory in which to create the clone
+     *                     (should include the repo name)
      * @throws GitAPIException
      */
     void doClone(final String repoURL, final File repoCloneDir,
-                    final CredentialsProvider credentialsProvider) throws GitAPIException {
-
+                    final CredentialsProvider credentialsProvider)
+            throws GitAPIException {
 
         final ProgressMonitor progressMonitor = new ProgressMonitor() {
             final boolean isVerbose = false;
 
             @Override
-            public void start(int totalTasks) {
+            public void start(final int totalTasks) {
                 if (isVerbose) {
                     System.out.println("start: totalTasks:" + totalTasks);
                 }
             }
 
             @Override
-            public void beginTask(String title, int totalWork) {
+            public void beginTask(final String title, final int totalWork) {
                 if (isVerbose) {
                     System.out.println(title + ": totalWork:" + totalWork);
-                } else {
-                    //System.out.print(title + "; ");
+//                } else {
+//                    System.out.print(title + "; ");
                 }
             }
 
             @Override
-            public void update(int completed) {
+            public void update(final int completed) {
                 if (isVerbose) {
                     System.out.println("completed:" + completed);
                 }
@@ -92,7 +97,8 @@ public class RepoOps {
                 cloneCommand.call();
     }
 
-    public List<String> cloneAll(final File workDir, final String user, final String pwd) throws IOException {
+    public List<String> cloneAll(final File workDir, final String user,
+                                 final String pwd) throws IOException {
         createDir(workDir);
 
         final File userCloneDir = new File(workDir, user);
@@ -113,7 +119,8 @@ public class RepoOps {
             final List<Repository> orgRepos = repoList.getReposForOrg(org);
             final File baseDirOrg = new File(userCloneDir, org.getLogin());
             createDir(baseDirOrg);
-            System.out.println("Org: " + org.getLogin() + ", total org repos: " + orgRepos.size());
+            System.out.println("Org: " + org.getLogin()
+                    + ", total org repos: " + orgRepos.size());
 
 
             for (final Repository repo : orgRepos) {
@@ -121,12 +128,14 @@ public class RepoOps {
 
                 final File repoCloneDir = new File(baseDirOrg, repo.getName());
                 if (repoCloneDir.exists()) {
-                    System.out.println("Dir exists, skipping: " + repoCloneDir);
+                    System.out.println("Dir exists, skipping: "
+                            + repoCloneDir);
                 } else {
                     createDir(repoCloneDir);
 
                     try {
-                        doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
+                        doClone(repo.getCloneUrl(), repoCloneDir,
+                                credentialsProvider);
                     } catch (Exception e) {
                         addFailure(failures, repo, repoCloneDir, e);
                     }
@@ -165,20 +174,32 @@ public class RepoOps {
         return failures;
     }
 
-    void addFailure(final List<String> failures, final Repository failedRepo, final File repoCloneDir, final Exception cause) throws IOException {
-        failures.add(failedRepo.getCloneUrl() + " -- " + repoCloneDir + " -- message: " + cause.getMessage());
+    void addFailure(final List<String> failures, final Repository failedRepo,
+                    final File repoCloneDir, final Exception cause)
+            throws IOException {
 
-        System.out.println("Clone failed!!! Deleting repoCloneDir: " + repoCloneDir + " -- message: " + cause.getMessage());
+        failures.add(failedRepo.getCloneUrl() + " -- " + repoCloneDir
+                + " -- message: " + cause.getMessage());
+
+        System.out.println("Clone failed!!! Deleting repoCloneDir: " + repoCloneDir
+                + " -- message: " + cause.getMessage());
         // delete cloneDir, so subsequent attempts can succeed
         delete(repoCloneDir);
     }
 
-    static void createDir(File dir) throws IOException {
+    /**
+     * Create all directories need for the given directory on disk.
+     * @param dir the dir tree to create.
+     * @throws IOException if an error occurs creating dirs.
+     */
+    static void createDir(final File dir) throws IOException {
         if (!dir.exists() && !dir.mkdirs()) {
-            throw new IllegalStateException("Error creating directory: " + dir.getCanonicalPath());
+            throw new IllegalStateException("Error creating directory: "
+                    + dir.getCanonicalPath());
         }
         if (!dir.isDirectory()) {
-            throw new IllegalStateException("Should be a directory: " + dir.getCanonicalPath());
+            throw new IllegalStateException("Should be a directory: "
+                    + dir.getCanonicalPath());
         }
     }
 
@@ -189,10 +210,8 @@ public class RepoOps {
                 delete(c);
             }
         }
-        if (!f.delete())
+        if (!f.delete()) {
             throw new FileNotFoundException("Failed to delete file: " + f);
+        }
     }
-
-
-
 }
