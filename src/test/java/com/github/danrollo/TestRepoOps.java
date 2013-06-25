@@ -56,6 +56,16 @@ public class TestRepoOps {
         final RepoList repoList = new RepoList(testProps.getProperty("user"), testProps.getProperty("password"));
         final String repoUrl = repoList.getReposPublic().get(0).getCloneUrl();
 
-        assertTrue(repoOps.doClone(repoUrl, workDir, RepoOps.getCredentials(testProps.getProperty("user"), testProps.getProperty("password"))));
+        final File repoCloneDir = new File(workDir, repoList.getReposPublic().get(0).getName());
+        RepoOps.createDir(repoCloneDir);
+
+        assertTrue(repoOps.doClone(repoUrl, repoCloneDir, RepoOps.getCredentials(testProps.getProperty("user"), testProps.getProperty("password"))));
+    }
+
+    // Do not normally run this, could be considered abusive
+    //@Test
+    public void testCloneAll() throws IOException, GitAPIException, URISyntaxException {
+
+        repoOps.cloneAll(workDir, testProps.getProperty("user"), testProps.getProperty("password"));
     }
 }

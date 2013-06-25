@@ -7,7 +7,6 @@ import org.eclipse.jgit.api.InitCommand;
 import org.eclipse.jgit.api.PullCommand;
 import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
-import org.eclipse.jgit.lib.BranchConfig;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.lib.StoredConfig;
 import org.eclipse.jgit.transport.*;
@@ -37,21 +36,17 @@ public class RepoOps {
      * git init
      * git pull https://<token>@github.com/username/bar.git
      *
-     *
-     * @param repoURL
-     * @param repoBasedir
+     * @param repoURL Repository CloneUrl
+     * @param repoCloneDir The local directory in which to create the clone (should include the repo name)
      * @throws IOException
      * @throws GitAPIException
      */
-    boolean doClone(final String repoURL, final File repoBasedir, final CredentialsProvider credentialsProvider) throws IOException, GitAPIException, URISyntaxException {
-
-
-        //final Repository repo = new FileRepository(repoBasedir);
+    boolean doClone(final String repoURL, final File repoCloneDir,
+                    final CredentialsProvider credentialsProvider) throws IOException, GitAPIException, URISyntaxException {
 
 
         final InitCommand initCommand = Git.init();
-        initCommand.setDirectory(repoBasedir);
-        initCommand.setBare(false);
+        initCommand.setDirectory(repoCloneDir);
 
         final Git git = initCommand.call();
 
@@ -122,6 +117,9 @@ public class RepoOps {
     public void cloneAll(final File workDir, final String user, final String pwd) throws IOException, GitAPIException, URISyntaxException {
         createDir(workDir);
 
+        final File userCloneDir = new File(workDir, user);
+        createDir(userCloneDir);
+
         final RepoList repoList = new RepoList(user, pwd);
 
         int count = 0;
@@ -133,7 +131,7 @@ public class RepoOps {
 
         for (final User org : orgs) {
             final List<Repository> orgRepos = repoList.getReposForOrg(org);
-            final File baseDirOrg = new File(workDir, org.getLogin());
+            final File baseDirOrg = new File(userCloneDir, org.getLogin());
             createDir(baseDirOrg);
             System.out.println("Org: " + org.getLogin() + ", total org repos: " + orgRepos.size());
 
@@ -141,7 +139,10 @@ public class RepoOps {
             for (final Repository repo : orgRepos) {
                 System.out.println(repo.getCloneUrl());
 
-                doClone(repo.getCloneUrl(), baseDirOrg, credentialsProvider);
+                final File repoCloneDir = new File(baseDirOrg, repo.getName());
+                createDir(repoCloneDir);
+
+                doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
 
                 count++;
             }
@@ -149,13 +150,16 @@ public class RepoOps {
 
 
         final List<Repository> reposPublic = repoList.getReposPublic();
-        final File baseDirPublic = new File(workDir, "public");
+        final File baseDirPublic = new File(userCloneDir, "public");
         createDir(baseDirPublic);
         System.out.println("Public repos: " + reposPublic.size());
         for (Repository repo : reposPublic) {
             System.out.println(repo.getCloneUrl());
 
-            doClone(repo.getCloneUrl(), baseDirPublic, credentialsProvider);
+            final File repoCloneDir = new File(baseDirPublic, repo.getName());
+            createDir(repoCloneDir);
+            doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
+
             count++;
         }
 
@@ -163,7 +167,7 @@ public class RepoOps {
 
     }
 
-    private void createDir(File dir) throws IOException {
+    static void createDir(File dir) throws IOException {
         if (!dir.exists()) {
             if (!dir.mkdirs()) {
                 throw new IllegalStateException("Error creating directory: " + dir.getCanonicalPath());

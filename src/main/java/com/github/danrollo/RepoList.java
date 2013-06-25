@@ -25,7 +25,7 @@ public class RepoList {
     private final String pwd;
 
     // so far, this is the only scope needed to list repos
-    private String[] scopes = new String[] {"repo"};
+    private final String[] scopes = new String[] {"repo"};
 
     private GitHubClient gitHubClient;
     private RepositoryService repositoryService;
@@ -45,7 +45,8 @@ public class RepoList {
             final Authorization auth = new Authorization();
             auth.setScopes(Arrays.asList(scopes));
 
-            final Authorization authValidated = oauthService.createAuthorization(auth);
+            //final Authorization authValidated =
+                    oauthService.createAuthorization(auth);
 
             gitHubClient = oauthService.getClient();
         }
