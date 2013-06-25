@@ -174,10 +174,8 @@ public class RepoOps {
     }
 
     static void createDir(File dir) throws IOException {
-        if (!dir.exists()) {
-            if (!dir.mkdirs()) {
-                throw new IllegalStateException("Error creating directory: " + dir.getCanonicalPath());
-            }
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IllegalStateException("Error creating directory: " + dir.getCanonicalPath());
         }
         if (!dir.isDirectory()) {
             throw new IllegalStateException("Should be a directory: " + dir.getCanonicalPath());
