@@ -45,14 +45,19 @@ public class TestRepoOps {
     public void testDoClone() throws IOException, GitAPIException, URISyntaxException {
 
         final RepoList repoList = new RepoList(testProps.getProperty("user"), testProps.getProperty("password"));
-        final Repository repo = repoList.getReposPublic().get(0);
-        final String repoUrl = repo.getCloneUrl();
+        if (repoList.getReposPublic().size() > 0) {
+            final Repository repo = repoList.getReposPublic().get(0);
+            final String repoUrl = repo.getCloneUrl();
 
-        final File repoCloneDir = new File(workDir, repo.getName());
-        RepoOps.createDir(repoCloneDir);
+            final File repoCloneDir = new File(workDir, repo.getName());
+            RepoOps.createDir(repoCloneDir);
 
-        repoOps.doClone(repoUrl, repoCloneDir,
-                RepoOps.getCredentials(testProps.getProperty("user"), testProps.getProperty("password")));
+            repoOps.doClone(repoUrl, repoCloneDir,
+                    RepoOps.getCredentials(testProps.getProperty("user"), testProps.getProperty("password")));
+        } else {
+            System.out.println("WARNING **** Skipping: testDoClone() due to zero public repositories available for user: " + testProps.getProperty("user"));
+        }
+
     }
 
     // Do not normally run this, could be considered abusive
