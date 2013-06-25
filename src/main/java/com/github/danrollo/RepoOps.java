@@ -2,18 +2,17 @@ package com.github.danrollo;
 
 import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.User;
+import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.InitCommand;
-import org.eclipse.jgit.api.PullCommand;
-import org.eclipse.jgit.api.PullResult;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.lib.ProgressMonitor;
-import org.eclipse.jgit.lib.StoredConfig;
-import org.eclipse.jgit.transport.*;
+import org.eclipse.jgit.transport.CredentialsProvider;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -38,38 +37,11 @@ public class RepoOps {
      *
      * @param repoURL Repository CloneUrl
      * @param repoCloneDir The local directory in which to create the clone (should include the repo name)
-     * @throws IOException
      * @throws GitAPIException
      */
-    boolean doClone(final String repoURL, final File repoCloneDir,
-                    final CredentialsProvider credentialsProvider) throws IOException, GitAPIException, URISyntaxException {
+    void doClone(final String repoURL, final File repoCloneDir,
+                    final CredentialsProvider credentialsProvider) throws GitAPIException {
 
-
-        final InitCommand initCommand = Git.init();
-        initCommand.setDirectory(repoCloneDir);
-
-        final Git git = initCommand.call();
-
-        final StoredConfig storedConfig = git.getRepository().getConfig();
-        // setup remote
-        final RemoteConfig remoteConfig = new RemoteConfig(storedConfig, "origin");
-        final URIish uri = new URIish(repoURL);
-        remoteConfig.addURI(uri);
-
-        final RefSpec refSpec = new RefSpec("refs/heads/master");
-        remoteConfig.addFetchRefSpec(refSpec);
-
-        remoteConfig.update(storedConfig);
-
-        // need 'merge' setting, otherwise fails with: org.eclipse.jgit.api.errors.InvalidConfigurationException: No value for key branch.master.merge found in configuration
-        storedConfig.setString("branch", "master", "merge", refSpec.getSource());
-
-        storedConfig.save();
-
-
-        final PullCommand pullCommand = git.pull();
-
-        pullCommand.setCredentialsProvider(credentialsProvider);
 
         final ProgressMonitor progressMonitor = new ProgressMonitor() {
             final boolean isVerbose = false;
@@ -109,12 +81,18 @@ public class RepoOps {
                 return false;
             }
         };
-        pullCommand.setProgressMonitor(progressMonitor);
-        final PullResult pullResult = pullCommand.call();
-        return pullResult.isSuccessful();
+
+
+        final CloneCommand cloneCommand = Git.cloneRepository();
+        cloneCommand.setURI(repoURL);
+        cloneCommand.setCredentialsProvider(credentialsProvider);
+        cloneCommand.setDirectory(repoCloneDir);
+        cloneCommand.setProgressMonitor(progressMonitor);
+        //final Git git =
+                cloneCommand.call();
     }
 
-    public void cloneAll(final File workDir, final String user, final String pwd) throws IOException, GitAPIException, URISyntaxException {
+    public List<String> cloneAll(final File workDir, final String user, final String pwd) throws IOException {
         createDir(workDir);
 
         final File userCloneDir = new File(workDir, user);
@@ -129,6 +107,8 @@ public class RepoOps {
 
         final CredentialsProvider credentialsProvider = getCredentials(user, pwd);
 
+        final List<String> failures = new ArrayList<String>();
+
         for (final User org : orgs) {
             final List<Repository> orgRepos = repoList.getReposForOrg(org);
             final File baseDirOrg = new File(userCloneDir, org.getLogin());
@@ -140,9 +120,17 @@ public class RepoOps {
                 System.out.println(repo.getCloneUrl());
 
                 final File repoCloneDir = new File(baseDirOrg, repo.getName());
-                createDir(repoCloneDir);
+                if (repoCloneDir.exists()) {
+                    System.out.println("Dir exists, skipping: " + repoCloneDir);
+                } else {
+                    createDir(repoCloneDir);
 
-                doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
+                    try {
+                        doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
+                    } catch (Exception e) {
+                        addFailure(failures, repo, repoCloneDir, e);
+                    }
+                }
 
                 count++;
             }
@@ -157,27 +145,56 @@ public class RepoOps {
             System.out.println(repo.getCloneUrl());
 
             final File repoCloneDir = new File(baseDirPublic, repo.getName());
-            createDir(repoCloneDir);
-            doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
+            if (repoCloneDir.exists()) {
+                System.out.println("Dir exists, skipping: " + repoCloneDir);
+            } else {
+                createDir(repoCloneDir);
+
+                try {
+                    doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
+                } catch (Exception e) {
+                    addFailure(failures, repo, repoCloneDir, e);
+                }
+            }
 
             count++;
         }
 
         System.out.println("Total Repo count: " + count);
 
+        return failures;
+    }
+
+    void addFailure(final List<String> failures, final Repository failedRepo, final File repoCloneDir, final Exception cause) throws IOException {
+        failures.add(failedRepo.getCloneUrl() + " -- " + repoCloneDir + " -- message: " + cause.getMessage());
+
+        System.out.println("Clone failed!!! Deleting repoCloneDir: " + repoCloneDir + " -- message: " + cause.getMessage());
+        // delete cloneDir, so subsequent attempts can succeed
+        delete(repoCloneDir);
     }
 
     static void createDir(File dir) throws IOException {
         if (!dir.exists()) {
             if (!dir.mkdirs()) {
                 throw new IllegalStateException("Error creating directory: " + dir.getCanonicalPath());
-            } else {
-                System.out.println("Created directory: " + dir.getCanonicalPath());
             }
         }
         if (!dir.isDirectory()) {
             throw new IllegalStateException("Should be a directory: " + dir.getCanonicalPath());
         }
     }
+
+    // @todo replace with JDK 1.7 equivalent?
+    static void delete(final File f) throws IOException {
+        if (f.isDirectory()) {
+            for (final File c : f.listFiles()) {
+                delete(c);
+            }
+        }
+        if (!f.delete())
+            throw new FileNotFoundException("Failed to delete file: " + f);
+    }
+
+
 
 }
