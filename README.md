@@ -6,9 +6,9 @@ Here is the [Maven generated web site]() for this project.
 Setup
 -----
 
-In order to run the unit tests in this project, you must first either create a
-new profile in your `.m2/settings.xml` file to provide your repository username
-and password, like so:
+In order to run the unit tests in this project, you must specify your
+your repository username and password. You can do this by creating a
+new profile in your `.m2/settings.xml` file, like so:
 
             <settings>
             ...
