@@ -4,7 +4,9 @@ import org.eclipse.egit.github.core.Repository;
 import org.eclipse.egit.github.core.User;
 import org.eclipse.jgit.api.CloneCommand;
 import org.eclipse.jgit.api.Git;
-import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.api.PullCommand;
+import org.eclipse.jgit.api.PullResult;
+import org.eclipse.jgit.api.errors.*;
 import org.eclipse.jgit.lib.ProgressMonitor;
 import org.eclipse.jgit.transport.CredentialsProvider;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -22,6 +24,47 @@ import java.util.List;
  */
 public final class RepoOps {
 
+    private static final ProgressMonitor progressMonitor = new ProgressMonitor() {
+        private static final boolean IS_VERBOSE = false;
+
+        @Override
+        public void start(final int totalTasks) {
+            if (IS_VERBOSE) {
+                System.out.println("start: totalTasks:" + totalTasks);
+            }
+        }
+
+        @Override
+        public void beginTask(final String title, final int totalWork) {
+            if (IS_VERBOSE) {
+                System.out.println(title + ": totalWork:" + totalWork);
+//                } else {
+//                    System.out.print(title + "; ");
+            }
+        }
+
+        @Override
+        public void update(final int completed) {
+            if (IS_VERBOSE) {
+                System.out.println("completed:" + completed);
+            }
+        }
+
+        @Override
+        public void endTask() {
+            if (IS_VERBOSE) {
+                System.out.println("task done");
+            }
+        }
+
+        @Override
+        public boolean isCancelled() {
+            return false;
+        }
+    };
+
+
+
     /**
      * @param user the repository user name
      * @param pwd the repository password
@@ -33,16 +76,7 @@ public final class RepoOps {
     }
 
     /**
-     * Use 1. init, 2. pull to avoid writing credentials or token in plain text
-     * in git files
-     * See: bottom of page:
-     * https://github.com/blog/
-     * 1270-easier-builds-and-deployments-using-git-over-https-and-oauth
-     *
-     * mkdir foo
-     * cd foo
-     * git init
-     * git pull https://<token>@github.com/username/bar.git
+     * Clone the given repository.
      *
      * @param repoURL Repository CloneUrl
      * @param repoCloneDir The local directory in which to create the clone
@@ -54,46 +88,6 @@ public final class RepoOps {
                     final CredentialsProvider credentialsProvider)
             throws GitAPIException {
 
-        final ProgressMonitor progressMonitor = new ProgressMonitor() {
-            private static final boolean IS_VERBOSE = false;
-
-            @Override
-            public void start(final int totalTasks) {
-                if (IS_VERBOSE) {
-                    System.out.println("start: totalTasks:" + totalTasks);
-                }
-            }
-
-            @Override
-            public void beginTask(final String title, final int totalWork) {
-                if (IS_VERBOSE) {
-                    System.out.println(title + ": totalWork:" + totalWork);
-//                } else {
-//                    System.out.print(title + "; ");
-                }
-            }
-
-            @Override
-            public void update(final int completed) {
-                if (IS_VERBOSE) {
-                    System.out.println("completed:" + completed);
-                }
-            }
-
-            @Override
-            public void endTask() {
-                if (IS_VERBOSE) {
-                    System.out.println("task done");
-                }
-            }
-
-            @Override
-            public boolean isCancelled() {
-                return false;
-            }
-        };
-
-
         final CloneCommand cloneCommand = Git.cloneRepository();
         cloneCommand.setURI(repoURL);
         cloneCommand.setCredentialsProvider(credentialsProvider);
@@ -102,6 +96,18 @@ public final class RepoOps {
         //final Git git =
                 cloneCommand.call();
     }
+
+
+    boolean doPull(final File repoDir, final CredentialsProvider credentialsProvider) throws IOException, GitAPIException {
+        final Git git = Git.open(repoDir);
+
+        final PullCommand pullCommand = git.pull();
+        pullCommand.setProgressMonitor(progressMonitor);
+        pullCommand.setCredentialsProvider(credentialsProvider);
+        final PullResult pullResult = pullCommand.call();
+        return pullResult.isSuccessful();
+    }
+
 
     /**
      * @param workDir base directory in which all other folders will be
