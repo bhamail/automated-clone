@@ -2,9 +2,9 @@
 
 <rss version="0.91">
   <channel>
-    <title>Automated Clone of Source Repository projtect - Checkstyle report</title>
+    <title>Automated Clone of Source Repository - Checkstyle report</title>
     <link>${project.url}</link>
-    <description>Automated Clone of Source Repository projtect - Checkstyle report</description>
+    <description>Automated Clone of Source Repository - Checkstyle report</description>
     <language>en-us</language>
     <copyright>&#169;2013</copyright>
     <item>
