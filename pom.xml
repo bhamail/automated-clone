@@ -11,6 +11,12 @@
     <description>Automatically clone/update all projects available to a given user
         to your local disk from github.</description>
 
+    <licenses>
+        <license>
+            <name>Apache 2.0</name>
+        </license>
+    </licenses>
+
     <scm>
         <url>https://github.com/bhamail/automated-clone</url>
         <connection>scm:git:${project.scm.url}</connection>
