@@ -7,7 +7,7 @@
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>Automated Clone of Source Repository projtect</name>
+    <name>Automated Clone of Source Repository</name>
     <description>Automatically clone/update all projects available to a given user
         to your local disk from github.</description>
 
