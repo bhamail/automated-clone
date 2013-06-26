@@ -57,10 +57,10 @@ public class TestRepoOps {
             final Repository repo = repoList.getReposPublic().get(0);
             final String repoUrl = repo.getCloneUrl();
 
-            final File repoCloneDir = new File(workDir, repo.getName());
-            RepoOps.createDir(repoCloneDir);
+            final File repoDir = new File(workDir, repo.getName());
+            RepoOps.createDir(repoDir);
 
-            repoOps.doClone(repoUrl, repoCloneDir, getTestCredentialProvider());
+            repoOps.doClone(repoUrl, repoDir, getTestCredentialProvider());
         } else {
             if (!quiet) {
                 System.out.println("WARNING **** Skipping: " + name.getMethodName()
@@ -83,10 +83,33 @@ public class TestRepoOps {
         final RepoList repoList = new RepoList(TestRepoList.getTestUser(), TestRepoList.getTestPwd());
         if (repoList.getReposPublic().size() > 0) {
             final Repository repo = repoList.getReposPublic().get(0);
-            final File repoCloneDir = new File(workDir, repo.getName());
-            assertTrue(repoCloneDir.exists());
+            final File repoDir = new File(workDir, repo.getName());
+            assertTrue(repoDir.exists());
 
-            repoOps.doPull(repoCloneDir, getTestCredentialProvider());
+            repoOps.doPull(repoDir, getTestCredentialProvider());
+        } else {
+            System.out.println("WARNING **** Skipping: " + name.getMethodName()
+                    + "() due to zero public repositories available for user: " + TestRepoList.getTestUser());
+        }
+    }
+
+    @Test
+    public void testDoFetch() throws GitAPIException, IOException, URISyntaxException {
+        // ensure a repo is available
+        quiet = true;
+        try {
+            testDoClone();
+        } finally {
+            quiet = false;
+        }
+
+        final RepoList repoList = new RepoList(TestRepoList.getTestUser(), TestRepoList.getTestPwd());
+        if (repoList.getReposPublic().size() > 0) {
+            final Repository repo = repoList.getReposPublic().get(0);
+            final File repoDir = new File(workDir, repo.getName());
+            assertTrue(repoDir.exists());
+
+            repoOps.doFetch(repoDir, getTestCredentialProvider());
         } else {
             System.out.println("WARNING **** Skipping: " + name.getMethodName()
                     + "() due to zero public repositories available for user: " + TestRepoList.getTestUser());
@@ -95,9 +118,9 @@ public class TestRepoOps {
 
     // Do not normally run this, could be considered abusive
     @Test
-    public void testCloneAll() throws IOException, GitAPIException, URISyntaxException {
+    public void testCloneOrUpdateAll() throws IOException, GitAPIException, URISyntaxException {
 
-        final List<String> failures = repoOps.cloneAll(workDir, TestRepoList.getTestUser(), TestRepoList.getTestPwd());
+        final List<String> failures = repoOps.cloneOrUpdateAll(workDir, TestRepoList.getTestUser(), TestRepoList.getTestPwd());
 
         final String message;
         if (failures.size() > 0) {
