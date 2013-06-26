@@ -36,14 +36,28 @@ public final class RepoList {
      */
     private final String[] scopes = new String[] {"repo"};
 
+    /**
+     * Client class for interacting with GitHub HTTP/JSON API.
+     */
     private GitHubClient gitHubClient;
+    /**
+     * Repository service class.
+     */
     private RepositoryService repositoryService;
 
-    RepoList(final String user, final String pwd) {
-        this.user = user;
-        this.pwd = pwd;
+    /**
+     * @param username repository login user name
+     * @param password repository login password
+     */
+    RepoList(final String username, final String password) {
+        this.user = username;
+        this.pwd = password;
     }
 
+    /**
+     * @return validated Client class for interacting with GitHub HTTP/JSON API.
+     * @throws IOException if an IO error occurs
+     */
     public synchronized GitHubClient getValidatedClient() throws IOException {
         if (gitHubClient == null) {
             final OAuthService oauthService = new OAuthService();
@@ -62,6 +76,10 @@ public final class RepoList {
         return gitHubClient;
     }
 
+    /**
+     * @return a valid instance of a RepositoryService.
+     * @throws IOException if an IO error occurs
+     */
     public synchronized RepositoryService getRepositoryService()
             throws IOException {
         if (repositoryService == null) {
@@ -70,13 +88,21 @@ public final class RepoList {
         return repositoryService;
     }
 
-
+    /**
+     * @return a list of Organizations to which the logged in user belongs.
+     * @throws IOException if an IO error occurs
+     */
     public List<User> getOrganizations() throws IOException {
         final OrganizationService organizationService
                 = new OrganizationService(getValidatedClient());
         return organizationService.getOrganizations();
     }
 
+    /**
+     * @param org the org who's repositories will be returned.
+     * @return the list of repositories available to the given Organization.
+     * @throws IOException if an IO error occurs
+     */
     public List<Repository> getReposForOrg(final User org) throws IOException {
         if (org == null) {
             throw new IllegalArgumentException(
@@ -87,12 +113,19 @@ public final class RepoList {
         return service.getOrgRepositories(org.getLogin());
     }
 
+    /**
+     * @return the list of public repositories available to the logged in user.
+     * @throws IOException if an IO error occurs
+     */
     public List<Repository> getReposPublic() throws IOException {
         final RepositoryService service = getRepositoryService();
         return service.getRepositories();
     }
 
 
+    /**
+     * @throws IOException if an IO error occurs
+     */
     public void doDump() throws IOException {
 
         int count = 0;

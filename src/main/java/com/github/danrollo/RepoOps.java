@@ -22,6 +22,11 @@ import java.util.List;
  */
 public final class RepoOps {
 
+    /**
+     * @param user the repository user name
+     * @param pwd the repository password
+     * @return a CredentialProvider for the given credentials
+     */
     static CredentialsProvider getCredentials(final String user,
                                               final String pwd) {
         return new UsernamePasswordCredentialsProvider(user, pwd);
@@ -42,14 +47,15 @@ public final class RepoOps {
      * @param repoURL Repository CloneUrl
      * @param repoCloneDir The local directory in which to create the clone
      *                     (should include the repo name)
-     * @throws GitAPIException
+     * @param credentialsProvider credentialsProvider for the given repository.
+     * @throws GitAPIException if an error occurs in a GIT API call.
      */
     void doClone(final String repoURL, final File repoCloneDir,
                     final CredentialsProvider credentialsProvider)
             throws GitAPIException {
 
         final ProgressMonitor progressMonitor = new ProgressMonitor() {
-            final boolean isVerbose = false;
+            private final boolean isVerbose = false;
 
             @Override
             public void start(final int totalTasks) {
@@ -97,6 +103,15 @@ public final class RepoOps {
                 cloneCommand.call();
     }
 
+    /**
+     * @param workDir base directory in which all other folders will be
+     *                created.
+     * @param user repository user name
+     * @param pwd repository password
+     * @return a list of error messages, which should be empty if no errors
+     * occurred.
+     * @throws IOException if an IO error occurs
+     */
     public List<String> cloneAll(final File workDir, final String user,
                                  final String pwd) throws IOException {
         createDir(workDir);
@@ -111,7 +126,8 @@ public final class RepoOps {
         final List<User> orgs = repoList.getOrganizations();
         System.out.println("Total Org count: " + orgs.size());
 
-        final CredentialsProvider credentialsProvider = getCredentials(user, pwd);
+        final CredentialsProvider credentialsProvider
+                = getCredentials(user, pwd);
 
         final List<String> failures = new ArrayList<String>();
 
@@ -160,7 +176,8 @@ public final class RepoOps {
                 createDir(repoCloneDir);
 
                 try {
-                    doClone(repo.getCloneUrl(), repoCloneDir, credentialsProvider);
+                    doClone(repo.getCloneUrl(), repoCloneDir,
+                            credentialsProvider);
                 } catch (Exception e) {
                     addFailure(failures, repo, repoCloneDir, e);
                 }
@@ -174,6 +191,15 @@ public final class RepoOps {
         return failures;
     }
 
+    /**
+     * @param failures list of failure messages, to which we will add the given
+     *                 error message and info.
+     * @param failedRepo the repository on which the failure occurred.
+     * @param repoCloneDir the local directory (which will be deleted)
+     *                     containing the failed repository clone.
+     * @param cause the failure cause
+     * @throws IOException if an IO error occurs
+     */
     void addFailure(final List<String> failures, final Repository failedRepo,
                     final File repoCloneDir, final Exception cause)
             throws IOException {
@@ -181,8 +207,9 @@ public final class RepoOps {
         failures.add(failedRepo.getCloneUrl() + " -- " + repoCloneDir
                 + " -- message: " + cause.getMessage());
 
-        System.out.println("Clone failed!!! Deleting repoCloneDir: " + repoCloneDir
-                + " -- message: " + cause.getMessage());
+        System.out.println("Clone failed!!! Deleting repoCloneDir: "
+                + repoCloneDir + " -- message: " + cause.getMessage());
+
         // delete cloneDir, so subsequent attempts can succeed
         delete(repoCloneDir);
     }
@@ -190,7 +217,7 @@ public final class RepoOps {
     /**
      * Create all directories need for the given directory on disk.
      * @param dir the dir tree to create.
-     * @throws IOException if an error occurs creating dirs.
+     * @throws IOException if an IO error occurs creating dirs.
      */
     static void createDir(final File dir) throws IOException {
         if (!dir.exists() && !dir.mkdirs()) {
@@ -203,6 +230,10 @@ public final class RepoOps {
         }
     }
 
+    /**
+     * @param f a directory to recursively delete, or a file to delete.
+     * @throws IOException if an IO error occurs.
+     */
     // @todo replace with JDK 1.7 equivalent?
     static void delete(final File f) throws IOException {
         if (f.isDirectory()) {
