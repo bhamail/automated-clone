@@ -8,8 +8,9 @@
     <packaging>jar</packaging>
 
     <name>Automated Clone of Source Repository</name>
-    <description>Automatically clone/update all projects available to a given user
-        to your local disk from github.</description>
+    <description>Automatically clone/update all projects available to a given
+        github user. If already cloned, attempt a pull. If pull fails, attempt
+        a fetch.</description>
 
     <licenses>
         <license>
