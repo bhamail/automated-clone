@@ -8,7 +8,8 @@
     <packaging>jar</packaging>
 
     <name>Automated Clone of Source Repository projtect</name>
-    <description>Automatically checkout/clone projects to your local disk from github.</description>
+    <description>Automatically clone/update all projects available to a given user
+        to your local disk from github.</description>
 
     <scm>
         <url>https://github.com/bhamail/automated-clone</url>
@@ -276,6 +277,21 @@ Downloading: http://repo1.maven.org/maven2/com/percero/maven/pom-parent/1.0/pom-
 
             </plugins>
         </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <systemPropertyVariables>
+                        <!-- read application specific properties that should be defined in .m2/settings.xml
+                         @todo Declare your own repostiory username/password in your .m2/settings.xml file
+                        -->
+                        <automated-clone.test.user>${automated-clone.test.user}</automated-clone.test.user>
+                        <automated-clone.test.password>${automated-clone.test.password}</automated-clone.test.password>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+        </plugins>
     </build>
 
 

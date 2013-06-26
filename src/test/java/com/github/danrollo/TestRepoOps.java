@@ -58,7 +58,7 @@ public class TestRepoOps {
     }
 
     // Do not normally run this, could be considered abusive
-    //@Test
+    @Test
     public void testCloneAll() throws IOException, GitAPIException, URISyntaxException {
 
         final List<String> failures = repoOps.cloneAll(workDir, TestRepoList.getTestUser(), TestRepoList.getTestPwd());

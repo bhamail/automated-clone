@@ -18,35 +18,81 @@ import static org.junit.Assert.*;
  * Time: 3:30 PM
  */
 public class TestRepoList {
-    static final String PROP_TEST_USER = "automated-clone.test.user";
-    static final String PROP_TEST_PWD = "automated-clone.test.password";
+    private static final String PROP_TEST_USER = "automated-clone.test.user";
+    private static String testUser;
 
-    private static Properties testProps;
-    private static Properties getTestProperties() throws IOException {
-        if (testProps == null) {
-            // read user/pwd from local source - @todo Add your own values to the file 'src/test/resources/test-login.properties'.
-            final String testPropsFilename = "test-login.properties";
-            final InputStream is = TestRepoList.class.getClassLoader().getResourceAsStream(testPropsFilename);
-            testProps = new Properties();
-            try {
-                assertNotNull("Failed to load unit test user/password properties. Be sure you created your own: '" + testPropsFilename + "' file.");
-                testProps.load(is);
-            } finally {
-                is.close();
+    private static final String PROP_TEST_PWD = "automated-clone.test.password";
+    private static String testPwd;
+
+    private static void getTestProperties() throws IOException {
+        if (testUser == null) {
+            // first try to read system properties what should be set via .m2/settings.xml
+            /*
+             @todo Add your repository username and password to .m2/settings.xml like so:
+
+            <settings>
+            ...
+                <profiles>
+                    <profile>
+                        <id>automated-clone.test.profile</id>
+
+                        <activation>
+                            <activeByDefault>false</activeByDefault>
+                        </activation>
+
+                        <properties>
+                            <automated-clone.test.user>yourUsername</automated-clone.test.user>
+                            <automated-clone.test.password>yourPassword</automated-clone.test.password>
+                        </properties>
+
+                    </profile>
+                </profiles>
+            ...
+            </settings>
+            */
+
+            final String settingsUser =  System.getProperty(PROP_TEST_USER);
+            if (settingsUser != null) {
+                testUser = settingsUser;
+                testPwd = System.getProperty(PROP_TEST_PWD);
+
+            } else {
+
+                // read user/pwd from local source
+                // @todo Add your own values to the file:
+                // 'src/test/resources/test-login.properties'.
+                final String testPropsFilename = "test-login.properties";
+                final InputStream is = TestRepoList.class.getClassLoader()
+                        .getResourceAsStream(testPropsFilename);
+                final Properties testProps = new Properties();
+                try {
+                    assertNotNull("Failed to load unit test user/password "
+                            + "properties from file: '" + testPropsFilename
+                            + "'.");
+                    testProps.load(is);
+                } finally {
+                    is.close();
+                }
+                // sanity check
+                testUser = testProps.getProperty(PROP_TEST_USER);
+                assertFalse("It appears you did not edit your .m2/settings.xml"
+                        + " file, nor 'src/test/resources/"
+                        + testPropsFilename + "' to have your repository "
+                        + "username and password.",
+                        "myuser".equals(testUser));
+                testPwd = testProps.getProperty(PROP_TEST_PWD);
             }
-            // sanity check
-            final String testUserName = testProps.getProperty(PROP_TEST_USER);
-            assertFalse("It appears you did not edit 'src/test/resources/" + testPropsFilename + "' to have your user/pwd.", "myuser".equals(testUserName));
         }
-        return testProps;
     }
 
     static String getTestUser() throws IOException {
-        return getTestProperties().getProperty(PROP_TEST_USER);
+        getTestProperties();
+        return testUser;
     }
 
     static String getTestPwd() throws IOException {
-        return getTestProperties().getProperty(PROP_TEST_PWD);
+        getTestProperties();
+        return testPwd;
     }
 
 
@@ -54,8 +100,6 @@ public class TestRepoList {
 
     @Before
     public void setUp() throws IOException {
-        final Properties testProps = getTestProperties();
-
         repoList = new RepoList(getTestUser(), getTestPwd());
     }
 
