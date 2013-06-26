@@ -55,18 +55,18 @@ public final class RepoOps {
             throws GitAPIException {
 
         final ProgressMonitor progressMonitor = new ProgressMonitor() {
-            private final boolean isVerbose = false;
+            private static final boolean IS_VERBOSE = false;
 
             @Override
             public void start(final int totalTasks) {
-                if (isVerbose) {
+                if (IS_VERBOSE) {
                     System.out.println("start: totalTasks:" + totalTasks);
                 }
             }
 
             @Override
             public void beginTask(final String title, final int totalWork) {
-                if (isVerbose) {
+                if (IS_VERBOSE) {
                     System.out.println(title + ": totalWork:" + totalWork);
 //                } else {
 //                    System.out.print(title + "; ");
@@ -75,14 +75,14 @@ public final class RepoOps {
 
             @Override
             public void update(final int completed) {
-                if (isVerbose) {
+                if (IS_VERBOSE) {
                     System.out.println("completed:" + completed);
                 }
             }
 
             @Override
             public void endTask() {
-                if (isVerbose) {
+                if (IS_VERBOSE) {
                     System.out.println("task done");
                 }
             }
