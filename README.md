@@ -1,7 +1,7 @@
 Automated Clone project
 =======================
 
-Here is the [Maven generated web site](http://bhamail.github.com/automated-clone/) for this project.
+Here is the [Maven generated web site](http://bhamail.github.com/automated-clone/index.html) for this project.
 
 Setup
 -----
